@@ -10,71 +10,71 @@ import com.sudocode.sudohide.ApplicationData;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 abstract class AppListAdapter extends BaseAdapter implements Filterable {
 
-    private final boolean mShowSystemApps;
-    List<ApplicationData> mDisplayItems = new ArrayList<>();
-    Context mContext;
-    LayoutInflater mInflater;
-    private Filter filter;
+	private final boolean mShowSystemApps;
+	List<ApplicationData> mDisplayItems = new ArrayList<>();
+	Context mContext;
+	LayoutInflater mInflater;
+	ThreadPoolExecutor mPool;
+	private Filter filter;
 
+	AppListAdapter(Context context, final boolean mShowSystemApps) {
+		super();
+		this.mContext = context;
 
-    AppListAdapter(Context context, final boolean mShowSystemApps) {
-        super();
-        this.mContext = context;
+		final AppListGetter appListGetter = AppListGetter.getInstance(context);
+		appListGetter.setOnDataAvailableListener(new AppListGetter.OnDatAvailableListener() {
+			@Override
+			public void onDataAvailable() {
+				mDisplayItems = appListGetter.getAvailableData(mShowSystemApps);
+				AppListAdapter.this.notifyDataSetChanged();
+			}
+		});
 
-        final AppListGetter appListGetter = AppListGetter.getInstance(context);
-        appListGetter.setOnDataAvailableListener(new AppListGetter.OnDatAvailableListener() {
-            @Override
-            public void onDataAvailable() {
+		appListGetter.callOnDataAvailable();
 
-                mDisplayItems = appListGetter.getAvailableData(mShowSystemApps);
-                AppListAdapter.this.notifyDataSetChanged();
-            }
-        });
+		this.mShowSystemApps = mShowSystemApps;
+		this.mInflater = LayoutInflater.from(context);
 
-        appListGetter.callOnDataAvailable();
+		int cpuCount = Runtime.getRuntime().availableProcessors();
+		mPool = new ThreadPoolExecutor(cpuCount + 1, cpuCount * 2 + 1, 2, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+	}
 
-        this.mShowSystemApps = mShowSystemApps;
-        this.mInflater = LayoutInflater.from(context);
+	boolean isShowSystemApps() {
+		return mShowSystemApps;
+	}
 
-    }
+	void setDisplayItems(List<ApplicationData> displayItems) {
+		this.mDisplayItems = displayItems;
+	}
 
-    public boolean isShowSystemApps() {
-        return mShowSystemApps;
-    }
+	Context getContext() {
+		return mContext;
+	}
 
-    public void setDisplayItems(List<ApplicationData> displayItems) {
-        this.mDisplayItems = displayItems;
-    }
+	@Override
+	public int getCount() {
+		return mDisplayItems.size();
+	}
 
-    public Context getContext() {
-        return mContext;
-    }
+	@Override
+	public Object getItem(int position) {
+		return mDisplayItems.get(position);
+	}
 
-    @Override
-    public int getCount() {
-        return mDisplayItems.size();
-    }
+	@Override
+	public long getItemId(int position) {
+		return mDisplayItems.get(position).hashCode();
+	}
 
-    @Override
-    public Object getItem(int position) {
-        return mDisplayItems.get(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return mDisplayItems.get(position).hashCode();
-    }
-
-
-    @Override
-    public Filter getFilter() {
-        if (filter == null) {
-            filter = new AppListFilter(this);
-        }
-        return filter;
-    }
+	@Override
+	public Filter getFilter() {
+		if (filter == null) filter = new AppListFilter(this);
+		return filter;
+	}
 }

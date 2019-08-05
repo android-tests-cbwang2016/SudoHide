@@ -2,9 +2,8 @@ package com.sudocode.sudohide.Adapters;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.util.TypedValue;
 import android.view.View;
@@ -12,8 +11,8 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.sudocode.sudohide.BitmapCachedLoader;
 import com.sudocode.sudohide.Constants;
 import com.sudocode.sudohide.R;
 
@@ -22,94 +21,74 @@ import java.util.TreeMap;
 
 public class CheckBoxAdapter extends AppListAdapter {
 
-    private final SharedPreferences pref;
-    private final String currentPkgName;
-    private final Map<String, Boolean> changedItems;
-    private final String currentApplicationLabel;
+	private final SharedPreferences pref;
+	private final String currentPkgName;
+	private final Map<String, Boolean> changedItems;
 
-    public CheckBoxAdapter(Context context, String pkgName, boolean showSystemApps) {
+	public CheckBoxAdapter(Context context, String pkgName, boolean showSystemApps) {
+		super(context, showSystemApps);
+		pref = PreferenceManager.getDefaultSharedPreferences(mContext);
+		currentPkgName = pkgName;
+		changedItems = new TreeMap<>();
+	}
 
-        super(context, showSystemApps);
-        pref = PreferenceManager.getDefaultSharedPreferences(mContext);
-        currentPkgName = pkgName;
-        changedItems = new TreeMap<>();
-        PackageManager packageManager = mContext.getPackageManager();
-        ApplicationInfo applicationInfo = null;
-        try {
-            applicationInfo = packageManager.getApplicationInfo(currentPkgName, 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        currentApplicationLabel = packageManager.getApplicationLabel(applicationInfo).toString().trim();
+	public Map<String, Boolean> getChangedItems() {
+		return changedItems;
+	}
 
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		if (convertView == null) convertView = mInflater.inflate(R.layout.list_item, parent, false);
+		
+		final TextView title = convertView.findViewById(R.id.app_name);
+		final ImageView icon = convertView.findViewById(R.id.app_icon);
+		final TextView subTitle = convertView.findViewById(R.id.package_name);
 
-    }
+		final String sTitle = mDisplayItems.get(position).getTitle();
+		final String key = mDisplayItems.get(position).getKey();
 
-    public Map<String, Boolean> getChangedItems() {
-        return changedItems;
-    }
+		icon.setTag(position);
+		icon.setImageResource(R.mipmap.ic_default);
+		Bitmap bmp = BitmapCachedLoader.memoryCache.get(key);
+		if (bmp == null)
+			(new BitmapCachedLoader(icon, mDisplayItems.get(position), getContext())).executeOnExecutor(this.mPool);
+		else
+			icon.setImageBitmap(bmp);
 
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+		title.setText(sTitle);
+		TypedArray a = mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{android.R.attr.editTextColor});
+		title.setTextColor(a.getColor(0, 0));
+		a.recycle();
 
-        if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.preference_checkbox, null, false);
-        }
+		subTitle.setText(key);
+		subTitle.setVisibility(PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
 
-        final TextView title = (TextView) convertView.findViewById(R.id.checkbox_app_name);
-        final ImageView icon = (ImageView) convertView.findViewById(R.id.icon);
-        final TextView subTitle = (TextView) convertView.findViewById(R.id.checkbox_package_name);
+		final String pref_key = key + ":" + currentPkgName;
+		final CheckBox checkBox = convertView.findViewById(android.R.id.checkbox);
+		checkBox.setVisibility(View.VISIBLE);
+		if (changedItems.containsKey(pref_key)) {
+			Boolean state = changedItems.get(pref_key);
+			checkBox.setChecked(state == null ? false : state);
+		} else {
+			checkBox.setChecked(pref.getBoolean(pref_key, false));
+		}
 
+		checkBox.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				addValue(((CheckBox)v).isChecked(), pref_key);
+			}
+		});
 
-        final String sTitle = mDisplayItems.get(position).getTitle();
-        final String key = mDisplayItems.get(position).getKey();
-        final Drawable dIcon = mDisplayItems.get(position).getIcon();
+		return convertView;
+	}
 
-
-        title.setText(sTitle);
-        title.setTextColor(mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{R.attr.editTextColor}).getColor(0, 0));
-        icon.setImageDrawable(dIcon);
-
-        String key_subTitle = key;
-        if (!PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false)) {
-            key_subTitle = "";
-        }
-
-        subTitle.setText(key_subTitle);
-
-        final String pref_key = key + ":" + currentPkgName;
-
-        final CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.chkCheckBox);
-        if(changedItems.containsKey(pref_key))
-        {
-            checkBox.setChecked(changedItems.get(pref_key));
-        }
-        else
-        {
-            checkBox.setChecked(pref.getBoolean(pref_key, false));
-        }
-
-        checkBox.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                CheckBox cb = (CheckBox) v;
-
-                boolean value = cb.isChecked();
-                String toastMessage = currentApplicationLabel + " will " + (value ? "" : "not ") + " be hidden from " + sTitle;
-                Toast.makeText(mContext, toastMessage, Toast.LENGTH_SHORT).show();
-                addValue(value, pref_key);
-            }
-        });
-
-        return convertView;
-    }
-
-    private void addValue(boolean value, String pref_key) {
-        if (changedItems.containsKey(pref_key)) {
-            changedItems.remove(pref_key);
-        } else {
-            changedItems.put(pref_key, value);
-        }
-    }
+	private void addValue(boolean value, String pref_key) {
+		if (changedItems.containsKey(pref_key)) {
+			changedItems.remove(pref_key);
+		} else {
+			changedItems.put(pref_key, value);
+		}
+	}
 
 }

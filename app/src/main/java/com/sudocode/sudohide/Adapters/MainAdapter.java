@@ -1,9 +1,9 @@
 package com.sudocode.sudohide.Adapters;
 
-
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sudocode.sudohide.BitmapCachedLoader;
 import com.sudocode.sudohide.Constants;
 import com.sudocode.sudohide.R;
 
@@ -19,74 +20,73 @@ import java.util.Set;
 
 public class MainAdapter extends AppListAdapter {
 
-    private final Set<String> mHidingConfigurationKeySet;
+	private final Set<String> mHidingConfigurationKeySet;
 
+	public MainAdapter(Context context, boolean showSystemApps) {
+		super(context, showSystemApps);
+		mContext = context;
+		mInflater = LayoutInflater.from(context);
+		mHidingConfigurationKeySet = PreferenceManager.getDefaultSharedPreferences(mContext).getAll().keySet();
+	}
 
-    public MainAdapter(Context context, boolean showSystemApps) {
-        super(context, showSystemApps);
-        mContext = context;
-        mInflater = LayoutInflater.from(context);
-        mHidingConfigurationKeySet = PreferenceManager.getDefaultSharedPreferences(mContext).getAll().keySet();
-    }
+	public String getKey(int position) {
+		return mDisplayItems.get(position).getKey();
+	}
 
-    public String getKey(int position) {
-        return mDisplayItems.get(position).getKey();
-    }
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		if (convertView == null) convertView = mInflater.inflate(R.layout.list_item, parent, false);
 
+		final TextView title = convertView.findViewById(R.id.app_name);
+		final ImageView icon = convertView.findViewById(R.id.app_icon);
+		final TextView subTitle = convertView.findViewById(R.id.package_name);
 
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+		final String sTitle = mDisplayItems.get(position).getTitle();
+		final String key = mDisplayItems.get(position).getKey();
 
-        if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.list_item, null, false);
-        }
+		icon.setTag(position);
+		icon.setImageResource(R.mipmap.ic_default);
+		Bitmap bmp = BitmapCachedLoader.memoryCache.get(key);
+		if (bmp == null)
+			(new BitmapCachedLoader(icon, mDisplayItems.get(position), getContext())).executeOnExecutor(this.mPool);
+		else
+			icon.setImageBitmap(bmp);
 
-        final TextView title = (TextView) convertView.findViewById(R.id.app_name);
-        final ImageView icon = (ImageView) convertView.findViewById(R.id.app_icon);
-        final TextView subTitle = (TextView) convertView.findViewById(R.id.package_name);
+		title.setText(sTitle);
+		subTitle.setText(key);
+		subTitle.setVisibility(PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
 
-        final String sTitle = mDisplayItems.get(position).getTitle();
-        final String key = mDisplayItems.get(position).getKey();
-        final Drawable dIcon = mDisplayItems.get(position).getIcon();
+		TypedArray a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.editTextColor });
+		title.setTextColor(a.getColor(0, 0));
+		a.recycle();
+		a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.colorControlNormal });
+		subTitle.setTextColor(a.getColor(0, 0));
+		a.recycle();
 
+		if (appIsHidden(key)) {
+			a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.colorAccent });
+			int color = a.getColor(0, 0);
+			a.recycle();
+			subTitle.setTextColor(color);
+			title.setTextColor(color);
+		}
 
-        title.setText(sTitle);
-        icon.setImageDrawable(dIcon);
-        String key_subTitle = key;
-        if (!PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false)) {
-            key_subTitle = "";
-        }
-        subTitle.setText(key_subTitle);
+		icon.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent it = mContext.getPackageManager().getLaunchIntentForPackage(key);
+				if (it == null) return;
+				it.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+				mContext.startActivity(it);
+			}
+		});
 
-        title.setTextColor(mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{R.attr.editTextColor}).getColor(0, 0));
-        subTitle.setTextColor(mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{R.attr.colorControlNormal}).getColor(0, 0));
+		return convertView;
+	}
 
-        if (appIsHidden(key)) {
-            int color = mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{R.attr.colorAccent}).getColor(0, 0);
-            subTitle.setTextColor(color);
-            title.setTextColor(color);
-        }
-
-
-        icon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent it = mContext.getPackageManager().getLaunchIntentForPackage(key);
-                it.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                mContext.startActivity(it);
-            }
-        });
-
-        return convertView;
-    }
-
-    private boolean appIsHidden(String packageName) {
-        for (String key : mHidingConfigurationKeySet) {
-            if (key.endsWith(packageName)) {
-                return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(key, false);
-            }
-        }
-        return false;
-    }
+	private boolean appIsHidden(String packageName) {
+		for (String key : mHidingConfigurationKeySet)
+		if (key.endsWith(packageName)) return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(key, false);
+		return false;
+	}
 }
-

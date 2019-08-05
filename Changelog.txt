@@ -3,6 +3,15 @@ Experimental:
 Beta:
 
 Stable:
+1.28.1 by Mikanoshi
+- Code refactored to be more safe and stable to prevent bootloops
+- Support library removed resulting in 96% APK size reduction :)
+  Min supported Android version is now 5.0+
+- All module settings are only applied on boot to minimize the performance impact
+- Faster app list loading
+- Fixed missing translations, added Russian
+- Cool new icon :)
+
 1.28
 -Android Nougat Support
 -Bug Fixes
