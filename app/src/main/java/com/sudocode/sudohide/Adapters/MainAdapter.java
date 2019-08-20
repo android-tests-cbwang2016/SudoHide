@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.preference.PreferenceManager;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -56,20 +57,16 @@ public class MainAdapter extends AppListAdapter {
 		subTitle.setText(key);
 		subTitle.setVisibility(PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
 
-		TypedArray a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.editTextColor });
-		title.setTextColor(a.getColor(0, 0));
-		a.recycle();
-		a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.colorControlNormal });
-		subTitle.setTextColor(a.getColor(0, 0));
-		a.recycle();
-
+		TypedArray a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, android.R.attr.colorAccent, android.R.attr.colorBackground });
+		title.setTextColor(a.getColor(0, Color.BLACK));
+		subTitle.setTextColor(a.getColor(1, Color.DKGRAY));
 		if (appIsHidden(key)) {
-			a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.colorAccent });
-			int color = a.getColor(0, 0);
-			a.recycle();
+			int color = a.getColor(2, Color.rgb(200, 44, 44));
 			subTitle.setTextColor(color);
 			title.setTextColor(color);
 		}
+		convertView.setBackgroundColor(a.getColor(3, Color.WHITE));
+		a.recycle();
 
 		icon.setOnClickListener(new View.OnClickListener() {
 			@Override

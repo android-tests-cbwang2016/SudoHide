@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.preference.PreferenceManager;
 import android.util.TypedValue;
 import android.view.View;
@@ -56,8 +57,8 @@ public class CheckBoxAdapter extends AppListAdapter {
 			icon.setImageBitmap(bmp);
 
 		title.setText(sTitle);
-		TypedArray a = mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{android.R.attr.editTextColor});
-		title.setTextColor(a.getColor(0, 0));
+		TypedArray a = mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{ android.R.attr.textColorPrimary });
+		title.setTextColor(a.getColor(0, Color.BLACK));
 		a.recycle();
 
 		subTitle.setText(key);

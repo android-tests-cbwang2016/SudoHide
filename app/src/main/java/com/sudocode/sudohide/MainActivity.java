@@ -1,7 +1,6 @@
 package com.sudocode.sudohide;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -31,7 +30,7 @@ import com.sudocode.sudohide.Adapters.ShowConfigurationAdapter;
 
 import java.io.File;
 
-public class MainActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends BaseActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
 	public static SharedPreferences pref;
 	private static final String preferencesFileName = BuildConfig.APPLICATION_ID + "_preferences";

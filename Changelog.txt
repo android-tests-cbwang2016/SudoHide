@@ -3,6 +3,10 @@ Experimental:
 Beta:
 
 Stable:
+1.28.2 by Mikanoshi
+- Fixed icons in lists for some apps
+- Fixed light/dark UI colors
+
 1.28.1 by Mikanoshi
 - Code refactored to be more safe and stable to prevent bootloops
 - Support library removed resulting in 96% APK size reduction :)

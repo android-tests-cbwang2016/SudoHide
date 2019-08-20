@@ -24,7 +24,7 @@ import java.util.Map;
 
 import static com.sudocode.sudohide.MainActivity.pref;
 
-public class AppHideConfigurationActivity extends Activity {
+public class AppHideConfigurationActivity extends BaseActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

@@ -14,6 +14,8 @@ android {
             keyPassword 'wiss92'
             storeFile file('sudohide-client.jks')
             storePassword 'wiss92'
+            v1SigningEnabled true
+            v2SigningEnabled false
         }
     }
     compileSdkVersion 28
@@ -22,7 +24,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 128
-        versionName "1.28.1"
+        versionName "1.28.2"
     }
     buildTypes {
         release {
