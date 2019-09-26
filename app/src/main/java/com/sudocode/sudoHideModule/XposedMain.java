@@ -124,9 +124,9 @@ public class XposedMain implements IXposedHookLoadPackage, IXposedHookZygoteInit
 				return true;
 			}
 
-			// public ApplicationInfo getApplicationInfo(String packageName, int flags, int userId)
+			// public ApplicationInfo getApplicationInfo(String packageName, int flags)
 			// need to bypass enforceCrossUserPermission
-			ApplicationInfo info = (ApplicationInfo)XposedHelpers.callMethod(thiz, "getApplicationInfo", callingName, 0, Binder.getCallingUid());
+			ApplicationInfo info = (ApplicationInfo)XposedHelpers.callMethod(thiz, "getApplicationInfo", callingName, 0);
 			if ((info.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
 				logDebug(key + " true");
 				return true;
