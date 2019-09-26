@@ -1,5 +1,6 @@
 package com.sudocode.sudoHideModule;
 
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
@@ -124,9 +125,10 @@ public class XposedMain implements IXposedHookLoadPackage, IXposedHookZygoteInit
 				return true;
 			}
 
-			// public ApplicationInfo getApplicationInfo(String packageName, int flags)
-			// need to bypass enforceCrossUserPermission
-			ApplicationInfo info = (ApplicationInfo)XposedHelpers.callMethod(thiz, "getApplicationInfo", callingName, 0);
+			Context mContext = (Context)XposedHelpers.getObjectField(thiz, "mContext");
+			Object mPM = XposedHelpers.getObjectField(thiz, "mPM");
+			if (mContext == null || mPM == null) return false;
+			ApplicationInfo info = (ApplicationInfo)XposedHelpers.callMethod(mPM, "getApplicationInfo", callingName, 0, XposedHelpers.callMethod(mContext, "getUserId"));
 			if ((info.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
 				logDebug(key + " true");
 				return true;
