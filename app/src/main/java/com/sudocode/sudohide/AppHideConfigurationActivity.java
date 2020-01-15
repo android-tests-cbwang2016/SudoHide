@@ -1,7 +1,6 @@
 package com.sudocode.sudohide;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;

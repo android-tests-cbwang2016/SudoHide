@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 repositories {
-    jcenter();
+    jcenter()
     maven { url 'http://repo1.maven.org/maven2' }
     maven { url 'http://jcenter.bintray.com' }
     maven { url "https://maven.google.com" }
@@ -22,9 +22,10 @@ android {
     defaultConfig {
         applicationId "com.sudocode.sudohide"
         minSdkVersion 21
-        targetSdkVersion 28
+        //noinspection OldTargetApi
+        targetSdkVersion 27
         versionCode 128
-        versionName "1.28.3"
+        versionName "1.28.4"
     }
     buildTypes {
         release {

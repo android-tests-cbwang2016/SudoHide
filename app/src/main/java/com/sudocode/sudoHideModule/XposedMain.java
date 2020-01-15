@@ -34,18 +34,21 @@ public class XposedMain implements IXposedHookLoadPackage, IXposedHookZygoteInit
 
 	@Override
 	public void initZygote(StartupParam startupParam) {
-		XSharedPreferences pref = null;
-		try {
-			pref = new XSharedPreferences(BuildConfig.APPLICATION_ID);
-			pref.makeWorldReadable();
-		} catch (Throwable t) {
-			XposedBridge.log(t);
-		}
+		if (mPrefs.size() == 0) {
+			XSharedPreferences pref = null;
+			try {
 
-		if (pref == null || pref.getAll().size() == 0) {
-			XposedBridge.log(X_SUDOHIDE_TAG + "Cannot read module's SharedPreferences!");
-			return;
-		} else mPrefs.putAll(pref.getAll());
+				pref = new XSharedPreferences(BuildConfig.APPLICATION_ID);
+				pref.makeWorldReadable();
+			} catch (Throwable t) {
+				XposedBridge.log(t);
+			}
+
+			if (pref == null || pref.getAll().size() == 0)
+				XposedBridge.log(X_SUDOHIDE_TAG + "Cannot read module's SharedPreferences! " + android.os.Process.myUid());
+			else
+				mPrefs.putAll(pref.getAll());
+		}
 
 		try {
 			Class<?> clsPMS = XposedHelpers.findClass("android.app.ApplicationPackageManager", null);

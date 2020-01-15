@@ -121,17 +121,17 @@ public class MainActivity extends BaseActivity implements SharedPreferences.OnSh
 			if (pkgFolder.exists()) {
 				pkgFolder.setExecutable(true, false);
 				pkgFolder.setReadable(true, false);
-				pkgFolder.setWritable(true, false);
+				//pkgFolder.setWritable(true, false);
 				File sharedPrefsFolder = new File(pkgFolder.getAbsolutePath() + "/shared_prefs");
 				if (sharedPrefsFolder.exists()) {
 					sharedPrefsFolder.setExecutable(true, false);
 					sharedPrefsFolder.setReadable(true, false);
-					sharedPrefsFolder.setWritable(true, false);
+					//sharedPrefsFolder.setWritable(true, false);
 					File f = new File(sharedPrefsFolder.getAbsolutePath() + "/" + preferencesFileName + ".xml");
 					if (f.exists()) {
 						f.setReadable(true, false);
 						f.setExecutable(true, false);
-						f.setWritable(true, false);
+						//f.setWritable(true, false);
 					}
 				}
 			}
