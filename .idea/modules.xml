@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/SudoHide.iml" filepath="$PROJECT_DIR$/SudoHide.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SudoHide.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SudoHide.app.iml" />
     </modules>
   </component>
 </project>

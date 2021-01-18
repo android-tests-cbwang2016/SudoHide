@@ -1,36 +1,33 @@
 package com.sudocode.sudohide.Adapters;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.preference.PreferenceManager;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sudocode.sudohide.ApplicationData;
 import com.sudocode.sudohide.BitmapCachedLoader;
 import com.sudocode.sudohide.Constants;
 import com.sudocode.sudohide.R;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class CheckBoxAdapter extends AppListAdapter {
 
-	private final SharedPreferences pref;
 	private final String currentPkgName;
 	private final Map<String, Boolean> changedItems;
 
 	public CheckBoxAdapter(Context context, String pkgName, boolean showSystemApps) {
 		super(context, showSystemApps);
-		pref = PreferenceManager.getDefaultSharedPreferences(mContext);
 		currentPkgName = pkgName;
 		changedItems = new TreeMap<>();
+		getAppList();
 	}
 
 	public Map<String, Boolean> getChangedItems() {
@@ -57,23 +54,16 @@ public class CheckBoxAdapter extends AppListAdapter {
 			icon.setImageBitmap(bmp);
 
 		title.setText(sTitle);
-		TypedArray a = mContext.obtainStyledAttributes((new TypedValue()).data, new int[]{ android.R.attr.textColorPrimary });
-		title.setTextColor(a.getColor(0, Color.BLACK));
-		a.recycle();
-
+		title.setTextColor(mColorPrimary);
 		subTitle.setText(key);
-		subTitle.setVisibility(PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
+		subTitle.setTextColor(mColorSecondary);
+		subTitle.setVisibility(mPrefs.getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
+		convertView.setBackground(mBackground);
 
 		final String pref_key = key + ":" + currentPkgName;
 		final CheckBox checkBox = convertView.findViewById(android.R.id.checkbox);
 		checkBox.setVisibility(View.VISIBLE);
-		if (changedItems.containsKey(pref_key)) {
-			Boolean state = changedItems.get(pref_key);
-			checkBox.setChecked(state == null ? false : state);
-		} else {
-			checkBox.setChecked(pref.getBoolean(pref_key, false));
-		}
-
+		checkBox.setChecked(appIsChecked(pref_key));
 		checkBox.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -84,12 +74,40 @@ public class CheckBoxAdapter extends AppListAdapter {
 		return convertView;
 	}
 
-	private void addValue(boolean value, String pref_key) {
-		if (changedItems.containsKey(pref_key)) {
-			changedItems.remove(pref_key);
+	private boolean appIsChecked(String packageName) {
+		if (changedItems.containsKey(packageName)) {
+			Boolean state = changedItems.get(packageName);
+			return state != null && state;
 		} else {
-			changedItems.put(pref_key, value);
+			return mPrefs.getBoolean(packageName, false);
 		}
+	}
+
+	private void addValue(boolean value, String pref_key) {
+		if (changedItems.containsKey(pref_key))
+			changedItems.remove(pref_key);
+		else
+			changedItems.put(pref_key, value);
+	}
+
+	@Override
+	public void sortList() {
+		Collections.sort(mDisplayItems, new Comparator<ApplicationData>() {
+			public int compare(ApplicationData app1, ApplicationData app2) {
+				try {
+					boolean app1checked = appIsChecked(app1.getKey() + ":" + currentPkgName);
+					boolean app2checked = appIsChecked(app2.getKey() + ":" + currentPkgName);
+					if (app1checked == app2checked)
+						return app1.compareTo(app2);
+					else if (app1checked)
+						return -1;
+					else
+						return 1;
+				} catch (Throwable t) {
+					return app1.compareTo(app2);
+				}
+			}
+		});
 	}
 
 }

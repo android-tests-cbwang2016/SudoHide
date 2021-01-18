@@ -1,5 +1,6 @@
 package com.sudocode.sudoHideModule;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -9,11 +10,14 @@ import android.os.Bundle;
 
 import com.sudocode.sudohide.BuildConfig;
 import com.sudocode.sudohide.Constants;
+import com.sudocode.sudohide.MainActivity;
 import com.sudocode.sudohide.PrefMap;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
@@ -26,28 +30,32 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class XposedMain implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
 	private static final String X_SUDOHIDE_TAG = "[XSudohide] ";
-	private static PrefMap<String, Object> mPrefs = new PrefMap<String, Object>();
+	private static final PrefMap<String, Object> mPrefs = new PrefMap<String, Object>();
 
 	private static void logDebug(String msg) {
 		if (BuildConfig.DEBUG) XposedBridge.log(X_SUDOHIDE_TAG + msg);
 	}
 
 	@Override
+	@SuppressLint("SdCardPath")
 	public void initZygote(StartupParam startupParam) {
 		if (mPrefs.size() == 0) {
 			XSharedPreferences pref = null;
 			try {
-
-				pref = new XSharedPreferences(BuildConfig.APPLICATION_ID);
+				if (XposedBridge.getXposedVersion() >= 93)
+					pref = new XSharedPreferences(BuildConfig.APPLICATION_ID);
+				else
+					pref = new XSharedPreferences(new File("/data/data/" + BuildConfig.APPLICATION_ID + "/shared_prefs/" + MainActivity.preferencesFileName + ".xml"));
 				pref.makeWorldReadable();
 			} catch (Throwable t) {
 				XposedBridge.log(t);
 			}
 
-			if (pref == null || pref.getAll().size() == 0)
+			Map<String, ?> allPrefs = pref == null ? null : pref.getAll();
+			if (allPrefs == null || allPrefs.size() == 0)
 				XposedBridge.log(X_SUDOHIDE_TAG + "Cannot read module's SharedPreferences! " + android.os.Process.myUid());
 			else
-				mPrefs.putAll(pref.getAll());
+				mPrefs.putAll(allPrefs);
 		}
 
 		try {
@@ -120,7 +128,7 @@ public class XposedMain implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			return true;
 		}
 
-		String key_hide_from_system = queryName + Constants.KEY_HIDE_FROM_SYSTEM;
+		String key_hide_from_system = queryName + ":" + Constants.KEY_HIDE_FROM_SYSTEM;
 		if (mPrefs.getBoolean(key_hide_from_system)) {
 			// block system processes like android.uid.systemui:10015
 			if (callingName.contains(":")) {

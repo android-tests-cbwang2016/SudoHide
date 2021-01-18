@@ -1,6 +1,7 @@
 package com.sudocode.sudohide;
 
 import android.app.ActionBar;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -81,7 +82,7 @@ public class AppHideConfigurationActivity extends BaseActivity {
 
 		final boolean[] isCheckedChanged = {false};
 		final boolean[] checkedValue = new boolean[1];
-		final String pref_key = packageName + Constants.KEY_HIDE_FROM_SYSTEM;
+		final String pref_key = packageName + ":" + Constants.KEY_HIDE_FROM_SYSTEM;
 		assert ckbHideFromSystem != null;
 		ckbHideFromSystem.setChecked(pref.getBoolean(pref_key, false));
 		ckbHideFromSystem.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -92,23 +93,26 @@ public class AppHideConfigurationActivity extends BaseActivity {
 			}
 		});
 
-		assert applyButton != null;
 		applyButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				boolean changes = false;
-				Iterator it = sub_adapter.getChangedItems().entrySet().iterator();
+				SharedPreferences.Editor editor = pref.edit();
+				Iterator<Map.Entry<String, Boolean>> it = sub_adapter.getChangedItems().entrySet().iterator();
 				while (it.hasNext()) {
 					changes = true;
-					Map.Entry pair = (Map.Entry) it.next();
-					pref.edit().putBoolean((String) pair.getKey(), ((Boolean) pair.getValue())).apply();
+					Map.Entry<String, Boolean> pair = it.next();
+					editor.putBoolean(pair.getKey(), pair.getValue());
 					it.remove();
 				}
 				if (isCheckedChanged[0]) {
-					pref.edit().putBoolean(pref_key, checkedValue[0]).apply();
+					editor.putBoolean(pref_key, checkedValue[0]);
 					changes = true;
 				}
-				if (changes) Toast.makeText(AppHideConfigurationActivity.this, R.string.applied, Toast.LENGTH_LONG).show();
+				if (changes) {
+					editor.apply();
+					Toast.makeText(AppHideConfigurationActivity.this, R.string.applied, Toast.LENGTH_LONG).show();
+				}
 			}
 		});
 	}

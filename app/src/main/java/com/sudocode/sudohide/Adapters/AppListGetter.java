@@ -22,7 +22,7 @@ public class AppListGetter extends AsyncTask<Void, Void, Void> {
 	private static AppListGetter instance = null;
 	private static List<ApplicationData> userApps = null;
 	private static List<ApplicationData> allApps = null;
-	private Context mContext;
+	private final Context mContext;
 	private OnDatAvailableListener mOnDatAvailableListener;
 	private PackageManager mPackageManager;
 	private List<ApplicationInfo> mInstalledApplications;

@@ -1,7 +1,5 @@
 package com.sudocode.sudohide;
 
-import android.graphics.drawable.Drawable;
-
 public class ApplicationData implements Comparable<ApplicationData> {
 
     private final String title;

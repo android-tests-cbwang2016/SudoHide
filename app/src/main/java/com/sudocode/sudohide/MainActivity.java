@@ -29,11 +29,14 @@ import com.sudocode.sudohide.Adapters.MainAdapter;
 import com.sudocode.sudohide.Adapters.ShowConfigurationAdapter;
 
 import java.io.File;
+import java.lang.reflect.Field;
 
 public class MainActivity extends BaseActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
 	public static SharedPreferences pref;
-	private static final String preferencesFileName = BuildConfig.APPLICATION_ID + "_preferences";
+	private static String prefsPathCurrent = null;
+	private static String prefsFileCurrent = null;
+	public static final String preferencesFileName = BuildConfig.APPLICATION_ID + "_preferences";
 	private final Handler handler = new Handler();
 	private ListView listView;
 	private MainAdapter mAdapter;
@@ -113,27 +116,49 @@ public class MainActivity extends BaseActivity implements SharedPreferences.OnSh
 		mAdapter.notifyDataSetChanged();
 	}
 
+	public String getSharedPrefsPath() {
+		if (prefsPathCurrent == null) try {
+			Field fFile = pref.getClass().getDeclaredField("mFile");
+			fFile.setAccessible(true);
+			prefsPathCurrent = ((File)fFile.get(pref)).getParentFile().getAbsolutePath();
+			return prefsPathCurrent;
+		} catch (Throwable t) {
+			return getFilesDir().getPath();
+		} else return prefsPathCurrent;
+	}
+
+	public String getSharedPrefsFile() {
+		if (prefsFileCurrent == null) try {
+			Field fFile = pref.getClass().getDeclaredField("mFile");
+			fFile.setAccessible(true);
+			prefsFileCurrent = ((File)fFile.get(pref)).getAbsolutePath();
+			return prefsFileCurrent;
+		} catch (Throwable t) {
+			return getFilesDir().getPath() + "/" + preferencesFileName + ".xml";
+		} else return prefsFileCurrent;
+	}
+
 	@SuppressLint({"SetWorldReadable", "SetWorldWritable"})
 	public void fixPermissionsAsync() {
 		AsyncTask.execute(() -> {
-			try { Thread.sleep(500); } catch (Throwable t) {}
+			try { Thread.sleep(500); } catch (Throwable ignore) {}
 			File pkgFolder = getApplicationContext().getFilesDir().getParentFile();
 			if (pkgFolder.exists()) {
 				pkgFolder.setExecutable(true, false);
 				pkgFolder.setReadable(true, false);
-				//pkgFolder.setWritable(true, false);
-				File sharedPrefsFolder = new File(pkgFolder.getAbsolutePath() + "/shared_prefs");
-				if (sharedPrefsFolder.exists()) {
-					sharedPrefsFolder.setExecutable(true, false);
-					sharedPrefsFolder.setReadable(true, false);
-					//sharedPrefsFolder.setWritable(true, false);
-					File f = new File(sharedPrefsFolder.getAbsolutePath() + "/" + preferencesFileName + ".xml");
-					if (f.exists()) {
-						f.setReadable(true, false);
-						f.setExecutable(true, false);
-						//f.setWritable(true, false);
-					}
-				}
+				pkgFolder.setWritable(true, false);
+			}
+			File sharedPrefsFolder = new File(getSharedPrefsPath());
+			if (sharedPrefsFolder.exists()) {
+				sharedPrefsFolder.setExecutable(true, false);
+				sharedPrefsFolder.setReadable(true, false);
+				sharedPrefsFolder.setWritable(true, false);
+			}
+			File sharedPrefsFile = new File(getSharedPrefsFile());
+			if (sharedPrefsFile.exists()) {
+				sharedPrefsFile.setReadable(true, false);
+				sharedPrefsFile.setExecutable(true, false);
+				sharedPrefsFile.setWritable(true, false);
 			}
 		});
 	}
@@ -141,6 +166,8 @@ public class MainActivity extends BaseActivity implements SharedPreferences.OnSh
 	@Override
 	protected void onResume() {
 		super.onResume();
+		mAdapter.getHideConfig();
+		mAdapter.sortList();
 		mAdapter.notifyDataSetChanged();
 		pref.registerOnSharedPreferenceChangeListener(this);
 	}
@@ -172,6 +199,7 @@ public class MainActivity extends BaseActivity implements SharedPreferences.OnSh
 	}
 
 	@Override
+	@SuppressLint("NonConstantResourceId")
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.action_restart_launcher:

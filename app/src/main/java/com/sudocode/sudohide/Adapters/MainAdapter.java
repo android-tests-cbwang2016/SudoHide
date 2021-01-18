@@ -2,32 +2,38 @@ package com.sudocode.sudohide.Adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.preference.PreferenceManager;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sudocode.sudohide.ApplicationData;
 import com.sudocode.sudohide.BitmapCachedLoader;
 import com.sudocode.sudohide.Constants;
 import com.sudocode.sudohide.R;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
+
+import static com.sudocode.sudohide.MainActivity.pref;
 
 public class MainAdapter extends AppListAdapter {
 
-	private final Set<String> mHidingConfigurationKeySet;
+	private Set<String> mHidingConfigurationKeySet;
 
 	public MainAdapter(Context context, boolean showSystemApps) {
 		super(context, showSystemApps);
 		mContext = context;
 		mInflater = LayoutInflater.from(context);
-		mHidingConfigurationKeySet = PreferenceManager.getDefaultSharedPreferences(mContext).getAll().keySet();
+		getHideConfig();
+		getAppList();
+	}
+
+	public void getHideConfig() {
+		mHidingConfigurationKeySet = mPrefs.getAll().keySet();
 	}
 
 	public String getKey(int position) {
@@ -54,19 +60,15 @@ public class MainAdapter extends AppListAdapter {
 			icon.setImageBitmap(bmp);
 
 		title.setText(sTitle);
+		title.setTextColor(mColorPrimary);
 		subTitle.setText(key);
-		subTitle.setVisibility(PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
-
-		TypedArray a = mContext.obtainStyledAttributes(new TypedValue().data, new int[]{ android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, android.R.attr.colorAccent, android.R.attr.colorBackground });
-		title.setTextColor(a.getColor(0, Color.BLACK));
-		subTitle.setTextColor(a.getColor(1, Color.DKGRAY));
+		subTitle.setTextColor(mColorSecondary);
+		subTitle.setVisibility(mPrefs.getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
 		if (appIsHidden(key)) {
-			int color = a.getColor(2, Color.rgb(200, 44, 44));
-			subTitle.setTextColor(color);
-			title.setTextColor(color);
+			subTitle.setTextColor(mColorAccent);
+			title.setTextColor(mColorAccent);
 		}
-		convertView.setBackgroundColor(a.getColor(3, Color.WHITE));
-		a.recycle();
+		convertView.setBackground(mBackground);
 
 		icon.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -82,8 +84,30 @@ public class MainAdapter extends AppListAdapter {
 	}
 
 	private boolean appIsHidden(String packageName) {
-		for (String key : mHidingConfigurationKeySet)
-		if (key.endsWith(packageName)) return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(key, false);
+		if (pref.getBoolean(packageName + ":" + Constants.KEY_HIDE_FROM_SYSTEM, false)) return true;
+		for (String key: mHidingConfigurationKeySet)
+		if (key.endsWith(packageName) && mPrefs.getBoolean(key, false)) return true;
 		return false;
 	}
+
+	@Override
+	public void sortList() {
+		Collections.sort(mDisplayItems, new Comparator<ApplicationData>() {
+			public int compare(ApplicationData app1, ApplicationData app2) {
+				try {
+					boolean app1hidden = appIsHidden(app1.getKey());
+					boolean app2hidden = appIsHidden(app2.getKey());
+					if (app1hidden == app2hidden)
+						return app1.compareTo(app2);
+					else if (app1hidden)
+						return -1;
+					else
+						return 1;
+				} catch (Throwable t) {
+					return app1.compareTo(app2);
+				}
+			}
+		});
+	}
+
 }

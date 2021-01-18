@@ -3,6 +3,19 @@ Experimental:
 Beta:
 
 Stable:
+1.28.5 by Mikanoshi
+- Better compatibility with app list mode in EdXposed 0.4.x.x
+- EdXposed 0.5.1.4+ support (configuration will be reset upon update)
+- Place hidden/checked apps in lists on top
+- Correctly update hidden state highlighting after returning to main list
+- Minor UI fixes
+
+1.28.4 by Mikanoshi
+- App list (black/white list) mode support
+
+1.28.3 by Mikanoshi
+- Fixed hiding from system apps
+
 1.28.2 by Mikanoshi
 - Fixed icons in lists for some apps
 - Fixed light/dark UI colors

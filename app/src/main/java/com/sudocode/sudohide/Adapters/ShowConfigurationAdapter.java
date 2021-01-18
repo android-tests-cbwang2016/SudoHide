@@ -1,7 +1,6 @@
 package com.sudocode.sudohide.Adapters;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -20,27 +19,22 @@ import java.util.List;
 
 public class ShowConfigurationAdapter extends AppListAdapter {
 
-	private final Context mContext;
 	private final LayoutInflater mInflater;
 	private final String mPackageName;
-	private final SharedPreferences pref;
 
 	public ShowConfigurationAdapter(Context context, String packageName) {
 		super(context, true);
-		mContext = context;
-		pref = PreferenceManager.getDefaultSharedPreferences(mContext);
 		mInflater = LayoutInflater.from(context);
 		mPackageName = packageName;
+		getAppList();
 		populateDisplayList();
 	}
 
 	private void populateDisplayList() {
 		List<ApplicationData> appList = new ArrayList<>();
-		for (ApplicationData app : mDisplayItems) {
+		for (ApplicationData app: mDisplayItems) {
 			final String pref_key = app.getKey() + ":" + mPackageName;
-			if (pref.getBoolean(pref_key, false)) {
-				appList.add(app);
-			}
+			if (mPrefs.getBoolean(pref_key, false)) appList.add(app);
 		}
 		mDisplayItems = appList;
 	}
@@ -65,7 +59,7 @@ public class ShowConfigurationAdapter extends AppListAdapter {
 			icon.setImageBitmap(bmp);
 
 		title.setText(sTitle);
-		subTitle.setText(sTitle);
+		subTitle.setText(sSubTitle);
 		subTitle.setVisibility(PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(Constants.KEY_SHOW_PACKAGE_NAME, false) ? View.VISIBLE : View.GONE);
 
 		return convertView;
