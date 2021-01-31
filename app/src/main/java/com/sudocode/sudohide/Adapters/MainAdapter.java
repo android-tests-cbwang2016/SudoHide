@@ -86,7 +86,7 @@ public class MainAdapter extends AppListAdapter {
 	private boolean appIsHidden(String packageName) {
 		if (pref.getBoolean(packageName + ":" + Constants.KEY_HIDE_FROM_SYSTEM, false)) return true;
 		for (String key: mHidingConfigurationKeySet)
-		if (key.endsWith(packageName) && mPrefs.getBoolean(key, false)) return true;
+		if (key.endsWith(":" + packageName) && mPrefs.getBoolean(key, false)) return true;
 		return false;
 	}
 
